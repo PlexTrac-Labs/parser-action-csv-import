@@ -2,3 +2,7 @@
 instance_url: 
 username: 
 password: 
+
+parser_id: 
+
+csv_file_path: 

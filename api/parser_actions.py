@@ -20,7 +20,7 @@ Returned source field can be used for endpoints requiring `parserId`.
     path = f'/tenant/{tenantId}/actions'
     return request.get(base_url, headers, root+path, name)
 
-def get_tenant_parser_actions(base_url, headers, tenantId, parserId, limit, skip, type, query):
+def get_tenant_parser_actions(base_url, headers, tenantId, parserId, limit:int=100, skip:int=0, type=None, query=None):
     """
     This request retrieves **a list of parser actions for a tenant** per identified parser source**.**
 
@@ -32,7 +32,11 @@ def get_tenant_parser_actions(base_url, headers, tenantId, parserId, limit, skip
     """
     name = "Get Tenant Parser Actions"
     root = "/api/v1"
-    path = f'/tenant/{tenantId}/actions/{parserId}?limit={limit}?skip={skip}?type={type}?query={query}'
+    path = f'/tenant/{tenantId}/actions/{parserId}?limit={limit}&skip={skip}'
+    if type != None:
+        path = f'{path}&type={type}'
+    if query != None:
+        path = f'{path}&query={query}'
     return request.get(base_url, headers, root+path, name)
 
 def get_tenant_parser_action(base_url, headers, tenantId, parserId, actionId):
