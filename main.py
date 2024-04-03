@@ -137,8 +137,7 @@ def parse_loaded_csv_of_parser_actions(loaded_csv) -> List[dict]:
             log.exception(f'Could not use \'{action}\' as an action, must be one of {valid_actions}. Using \'Default\' as action...')
             action = "PASS_THROUGH"
 
-        # parser_action will be modified depending if it needs to be created or updated
-        # default payload for PASS_THROUGH and IGNORE actions
+        # parser_action obj will be modified later depending if it's the payload for a create or update request
         parser_action = {
             "id": id,
             "title": title,
@@ -148,15 +147,6 @@ def parse_loaded_csv_of_parser_actions(loaded_csv) -> List[dict]:
             "writeupID": writeup_id,
             "writeupLabel": writeup_label
         }
-
-        # # update default payload for DEFAULT(choose severity) action
-        # if action == "DEFAULT":
-        #     parser_action["severity"] = severity
-
-        # # update default payload for LINK action
-        # if action == "LINK":
-        #     parser_action["writeupID"] = writeup_id
-        #     parser_action["writeupLabel"] = writeup_label
 
         parser_actions.append(parser_action)
 
@@ -247,7 +237,7 @@ def import_parser_actions(parser_id, parser_actions:List[dict], auth: Auth):
     parser_actions_to_create = []
     parser_actions_to_update = []
     for parser_action in parser_actions:
-        if parser_action['id'] in existing_parser_action_ids:
+        if parser_action['id'] in existing_parser_action_ids: # update parser action in platform
             # update parser action parsed from CSV, to properties required for update request 
             parser_action.pop("title", None)
             parser_action.pop("description", None)
@@ -257,7 +247,7 @@ def import_parser_actions(parser_id, parser_actions:List[dict], auth: Auth):
                 parser_action["writeupID"] = ""
                 parser_action["writeupLabel"] = ""
             parser_actions_to_update.append(parser_action)
-        else:
+        else: # create new parser action in platform
             parser_actions_to_create.append(parser_action)
     log.info(f'Parser Actions to Update: {len(parser_actions_to_update)}')
     log.info(f'Parser Actions to Create: {len(parser_actions_to_create)}')
@@ -269,20 +259,24 @@ def import_parser_actions(parser_id, parser_actions:List[dict], auth: Auth):
         }
         response = api.parser_actions.bulk_update_tenant_parser_actions(auth.base_url, auth.get_auth_headers(), auth.tenant_id, parser_id, payload)
         if response.has_json_response and response.json.get("status") == "success":
-            log.success(f'Updated parser actions')
+            log.success(f'Updated {len(parser_actions_to_update)} parser actions')
+        else:
+            log.exception(f'Request to update parser actions did not return success message')
     except Exception as e:
         log.exception(f'Request failed to update parser actions')
     # creating parser actions
     log.info(f'Creating {len(parser_actions_to_create)} new parser action(s)...')
     for parser_action in parser_actions_to_create:
-        log.info
         try:
             payload = parser_action
             response = api.parser_actions.create_tenant_parser_action(auth.base_url, auth.get_auth_headers(), auth.tenant_id, parser_id, payload)
             if response.has_json_response and response.json.get("status") == "success":
-                log.success(f'Created new parser action')
+                log.success(f'Created new parser action \'{parser_action["title"]}\'')
+            else:
+                log.exception(f'Create request did not return success message. Could not create parser action \'{parser_action["title"]}\'. Skipping...')
+                continue
         except Exception as e:
-            log.exception(f'Could not create parser action \'parser\'. Skipping...')
+            log.exception(f'Could not create parser action \'{parser_action["title"]}\'. Skipping...')
             continue
 
 

@@ -1,7 +1,16 @@
-# base-API-script
-This repo can be used as a starting point for developing a Python script that utilizes the Plextrac API in some way. It acts as a mini framework with some helpful utilities that make endpoint calls easier. These utilities include a logger, authentication handler, API wrapper library that stores endpoint URLs, and other general utility function that revolve around user inputs, data sanitization, and data validation.
+# parser-action-csv-import
+This script is meant to help manage Parser Actions in platform. It utilizes the API to update or create new parser actions based on data provided from a CSV file. This allows makes updates in bulk and better hanlding of modifications needing to be made to parser actions.
 
-To get started make a copy of this repo and read through the main.py file which goes more in-depth about the utilities available. You can also run the script with the instructions below to see the output of the examples used when describing the utilities available. Once you know what's available, you can remove the examples, and start writing your script in the main.py file.
+In platform you're not able to direct import Parser Actions, you can only import scan files. This script "imports" parser action by sending a create or update request.
+
+The script is meant to work in tandem with the parser-action-csv-export script. The schema of the CSV produced when exporting, is the expected schema to import in this script.
+
+The table below gives some details about different properties of a parser action stored in Plextrac. It also shows which data in the CSV is used when creating or updating a parser action.
+|  | plugin_id | title | action | severity | original_severity | description | last_updated_at | writeup_id | writeup_title | writeup_abbreviation | writeup_repository_id |
+|-|-|-|-|-|-|-|-|-|-|-|-|
+| Details | ID cannot be changed after creation | title cannot be changed after creation | one of ["PASS_THROUGH", "IGNORE", "DEFAULT", "LINK"] | one of ["Critical", "High", "Medium", "Low", "Informational"] | original severity cannot be set. severity at time of creation is used | description cannot be changed after creation | parser action creation does not add a updated at timestamp |  |  |  |  |
+| Create | created | created | created | created | - | created | - | created | created | - | - |
+| Update | - | - | updated | updated | - | - | - | updated | updated | - | - |
 
 # Requirements
 - [Python 3+](https://www.python.org/downloads/)
@@ -36,9 +45,40 @@ The following values can either be added to the `config.yaml` file or entered wh
 - PlexTrac Top Level Domain e.g. https://yourapp.plextrac.com
 - Username
 - Password
+- Parser ID
+- CSV file path
+
+The parser ID determines which parser you want to update or create parser actions in. The list for all available parsers is:
+- acunetix
+- burp
+- burphtml
+- checkmarx
+- coreimpact
+- custom
+- hclappscan
+- horizon
+- invicti
+- nessus
+- netsparker
+- nexpose
+- nipper
+- nmap
+- nodeware
+- nodezero
+- offlinecsv
+- openvas
+- owaspzap
+- pentera
+- ptrac
+- qualys
+- rapidfire
+- scythe
+- veracode
 
 ## Script Execution Flow
-- Starts executing the main.py file
-- Prints script info stored in settings.py
-- Reads in values from config.yaml file
-- Goes through list of examples to show the user current functionality that can be utilized
+- Verifies the parser ID is a valid ID of an existing Parser in platform
+- Load and parses the parser actions from the CSV
+- Loads existing parser action for specified parser from instance
+- Gets list of update to make and new parser actions to create
+- Update parser actions
+- Creates any new parser actions
